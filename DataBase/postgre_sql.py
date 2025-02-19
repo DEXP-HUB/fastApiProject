@@ -1,41 +1,83 @@
 import psycopg2
+        
 
-
-class PostgreSql:
-    @classmethod
-    def __init__(cls, dbname, user, password, host, port, cursor_factory=None):
-        cls.conn = psycopg2.connect(
-            dbname=dbname, 
-            user=user, 
-            password=password, 
-            host=host, 
-            port=port,
+class ConnectionDb:
+    def connect(self, cursor_factory=None):
+        self.conn = psycopg2.connect(
+            dbname='registration', 
+            user='postgres', 
+            password='lola2015', 
+            host='127.0.0.1', 
+            port='5432',
             cursor_factory=cursor_factory
         )
+        return self.conn
+    
 
-
+class SelectUser:
     @classmethod
-    def select(cls, respon):
+    def select_all(cls, connect):
+        cls.conn = connect
+
         with cls.conn as conn:
             with conn.cursor() as cur:
-                cur.execute(respon)
+                cur.execute("SELECT * FROM users.profiles;")
                 result = cur.fetchall()
-        return result      
 
+        return result 
+    
 
+class InsertUser:
     @classmethod
-    def insert(cls, data):
+    def insert_all(cls, connect, data):
+        cls.conn = connect
+
         with cls.conn as conn:
             with conn.cursor() as cur:
                 cur.execute(
-                    """INSERT INTO users.profiles (
+                    """
+                    INSERT INTO users.profiles (
                         first_name, last_name, email, status, city,
                         address, age, floor, apartament_number, data_registratsii
                     ) VALUES (
                         %(first_name)s, %(last_name)s, %(email)s,
                         %(status)s, %(city)s, %(address)s, %(age)s,
                         %(floor)s, %(apartament_number)s, %(data_registratsii)s
-                    )""", data
+                    )
+                    """, data
                 )
-        
+
+
+class DeleteUser:
+    @classmethod
+    def delete_by_id(cls, connect, id):
+        cls.conn = connect
+
+        with cls.conn as conn:
+            with conn.cursor() as cur:
+                cur.execute(f"DELETE FROM users.profiles WHERE id = {id};")
+
+
+class UpdateUser:
+    @classmethod
+    def update_by_id(cls, connect, data):
+        cls.conn = connect
+
+        with cls.conn as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    UPDATE users.profiles SET 
+                        first_name=%(first_name)s, last_name=%(last_name)s,
+                        email=%(email)s, status=%(status)s,
+                        city=%(city)s, address=%(address)s,
+                        age=%(age)s, floor=%(floor)s,
+                        apartament_number=%(apartament_number)s,
+                        data_registratsii=%(data_registratsii)s
+                    WHERE id = %(id)s
+                    ;""", data
+                )
+            
+
+                
 
