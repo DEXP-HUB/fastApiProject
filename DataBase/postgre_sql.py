@@ -50,7 +50,7 @@ class InsertUser:
 
 class DeleteUser:
     @classmethod
-    def delete_by_id(cls, connect, id):
+    def by_id(cls, connect, id):
         cls.conn = connect
 
         with cls.conn as conn:
@@ -60,24 +60,17 @@ class DeleteUser:
 
 class UpdateUser:
     @classmethod
-    def update_by_id(cls, connect, data):
+    def by_id(cls, connect, data):
         cls.conn = connect
+        param = [f"{key} = %({key})s" for key in data.keys() if key != 'id']
 
         with cls.conn as conn:
             with conn.cursor() as cur:
                 cur.execute(
-                    """
-                    UPDATE users.profiles SET 
-                        first_name=%(first_name)s, last_name=%(last_name)s,
-                        email=%(email)s, status=%(status)s,
-                        city=%(city)s, address=%(address)s,
-                        age=%(age)s, floor=%(floor)s,
-                        apartament_number=%(apartament_number)s,
-                        data_registratsii=%(data_registratsii)s
-                    WHERE id = %(id)s
-                    ;""", data
+                    f"UPDATE users.profiles SET {', '.join(param)} WHERE id = %(id)s;", data
                 )
-            
 
-                
+  
+
+
 

@@ -5,10 +5,14 @@ from fastapi.responses import JSONResponse
 from psycopg2.extras import RealDictCursor
 
 
-app = FastAPI()
+app = FastAPI(description='CRUD application')
 
 
-@app.get('/users')
+@app.get(
+        path='/users', 
+        description='Get all users',
+        tags=['Get method']
+        )
 def get_users():
     db = ConnectionDb().connect(cursor_factory=RealDictCursor)  
     users = SelectUser().select_all(db)
@@ -16,25 +20,40 @@ def get_users():
     return JSONResponse(content={ind: el for ind, el in enumerate(json)})
 
     
-@app.post('/insert')
+@app.post(
+        path='/insert', 
+        description='Create user to database',
+        tags=['Post method']
+        )
 def insert_user(data=Body()):
     db = ConnectionDb().connect()
     InsertUser().insert_all(db, data)
     return JSONResponse(content={'status': 200})
 
 
-@app.delete('/delete/{id}')
+@app.delete(
+        path='/delete/{id}', 
+        description='Delete user from database',
+        tags=['Delete method']
+        )
 def delete_user(id):
     db = ConnectionDb().connect()
-    DeleteUser.delete_by_id(db, id)
+    DeleteUser.by_id(db, id)
     return JSONResponse(content={'status': 200})
 
 
-@app.put('/update')
+@app.api_route(
+        path='/update', 
+        methods=['put', 'path'], 
+        description='Update user to database',
+        tags=['Update method']
+        )
 def update_user(data=Body()):
     db = ConnectionDb().connect()
-    UpdateUser.update_by_id(db, data)
-    return JSONResponse(content={'status': 200})
+    UpdateUser.by_id(db, data)
+    return JSONResponse(content=data)
+
+
     
     
 
