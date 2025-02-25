@@ -1,11 +1,26 @@
+from typing import Literal
 from DataBase.postgre_sql import ConnectionDb, SelectUser, InsertUser, DeleteUser, UpdateUser
 from fastapi import FastAPI, Body
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from psycopg2.extras import RealDictCursor
+from pydantic import BaseModel, Field, EmailStr
 
 
 app = FastAPI(description='CRUD application')
+
+
+class UserSchema(BaseModel):
+    first_name: str = Field(max_length=15)
+    last_name: str = Field(max_length=15)
+    city: str = Field(max_length=20)
+    address: str = Field(max_length=50)
+    age: int = Field(ge=0, le=115)
+    floor: int = Field(ge=0, le=163)
+    apartament_number: int = Field(ge=0)
+    data_registratsii: Literal['NOW()']
+    status: Literal['user', 'admin']
+    email: EmailStr
 
 
 @app.get(
@@ -26,6 +41,7 @@ def get_users():
         tags=['Post method']
         )
 def insert_user(data=Body()):
+    UserSchema(**data)
     db = ConnectionDb().connect()
     InsertUser().insert_all(db, data)
     return JSONResponse(content={'status': 200})
