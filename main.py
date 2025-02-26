@@ -40,10 +40,9 @@ def get_users():
         description='Create user to database',
         tags=['Post method']
         )
-def insert_user(data=Body()):
-    UserSchema(**data)
+def insert_user(user: UserSchema):
     db = ConnectionDb().connect()
-    InsertUser().insert_all(db, data)
+    InsertUser().insert_all(db, dict(user))
     return JSONResponse(content={'status': 200})
 
 
