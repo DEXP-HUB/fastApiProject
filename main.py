@@ -18,7 +18,7 @@ class UserSchema(BaseModel):
     age: int = Field(ge=0, le=115)
     floor: int = Field(ge=0, le=163)
     apartament_number: int = Field(ge=0)
-    id: int
+    id: int = Field(ge=0)
     data_registratsii: Literal['NOW()']
     status: Literal['user', 'admin']
     email: EmailStr
