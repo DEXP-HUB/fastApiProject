@@ -18,6 +18,7 @@ class UserSchema(BaseModel):
     age: int = Field(ge=0, le=115)
     floor: int = Field(ge=0, le=163)
     apartament_number: int = Field(ge=0)
+    id: int
     data_registratsii: Literal['NOW()']
     status: Literal['user', 'admin']
     email: EmailStr
@@ -63,13 +64,13 @@ def delete_user(id):
         description='Update user to database',
         tags=['Update method']
         )
-def update_user(data=Body()):
+def update_user(user: UserSchema):
     db = ConnectionDb().connect()
-    UpdateUser.by_id(db, data)
-    return JSONResponse(content=data)
+    UpdateUser.by_id(db, dict(user))
+    return JSONResponse(content=jsonable_encoder(user))
 
 
-    
+
     
 
 
