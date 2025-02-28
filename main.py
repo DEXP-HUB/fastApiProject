@@ -24,8 +24,7 @@ class UserSchema(BaseModel):
     email: EmailStr
 
 
-@app.get(
-        path='/users', 
+@app.get(path='/users', 
         description='Get all users',
         tags=['Get method']
         )
@@ -34,6 +33,17 @@ def get_users():
     users = SelectUser().select_all(db)
     json = jsonable_encoder(users)
     return JSONResponse(content={ind: el for ind, el in enumerate(json)})
+
+
+@app.get(path='/user/{id}',
+        description='Get user by id',
+        tags=['Get method']
+        )
+def get_user(id):
+    db = ConnectionDb().connect(cursor_factory=RealDictCursor)
+    user = SelectUser.select(db, id)
+    json = jsonable_encoder(user)
+    return JSONResponse(content=json)
 
     
 @app.post(

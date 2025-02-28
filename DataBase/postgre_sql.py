@@ -1,5 +1,5 @@
 import psycopg2
-        
+
 
 class ConnectionDb:
     def connect(self, cursor_factory=None):
@@ -11,6 +11,7 @@ class ConnectionDb:
             port='5432',
             cursor_factory=cursor_factory
         )
+        
         return self.conn
     
 
@@ -24,7 +25,21 @@ class SelectUser:
                 cur.execute("SELECT * FROM users.profiles;")
                 result = cur.fetchall()
 
-        return result 
+        return result
+    
+
+    @classmethod
+    def select(cls, connect, id):
+        cls.conn = connect
+        cls.id = id
+
+        with cls.conn as conn:
+            with conn.cursor() as cur:
+                cur.execute(f"SELECT * FROM users.profiles WHERE id = {cls.id};")
+                result = cur.fetchone()
+
+        return result
+
     
 
 class InsertUser:
@@ -71,6 +86,4 @@ class UpdateUser:
                 )
 
   
-
-
 
