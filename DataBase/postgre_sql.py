@@ -17,7 +17,7 @@ class ConnectionDb:
 
 class SelectUser:
     @classmethod
-    def select_all(cls, connect):
+    def all_users(cls, connect):
         cls.conn = connect
 
         with cls.conn as conn:
@@ -29,13 +29,27 @@ class SelectUser:
     
 
     @classmethod
-    def select(cls, connect, id):
+    def by_id(cls, connect, id):
         cls.conn = connect
         cls.id = id
 
         with cls.conn as conn:
             with conn.cursor() as cur:
                 cur.execute(f"SELECT * FROM users.profiles WHERE id = {cls.id};")
+                result = cur.fetchone()
+
+        return result
+    
+
+    @classmethod
+    def by_login(cls, connect, login):
+        cls.conn = connect
+        cls.login = login
+
+        with cls.conn as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT login, password FROM users.profiles WHERE login = %s;", 
+                            (cls.login,))
                 result = cur.fetchone()
 
         return result
@@ -53,11 +67,13 @@ class InsertUser:
                     """
                     INSERT INTO users.profiles (
                         first_name, last_name, email, status, city,
-                        address, age, floor, apartament_number, data_registratsii
+                        address, age, floor, apartament_number, data_registratsii,
+                        password, login
                     ) VALUES (
                         %(first_name)s, %(last_name)s, %(email)s,
                         %(status)s, %(city)s, %(address)s, %(age)s,
-                        %(floor)s, %(apartament_number)s, %(data_registratsii)s
+                        %(floor)s, %(apartament_number)s, %(data_registratsii)s,
+                        %(login)s, %(password)s
                     )
                     """, data
                 )
