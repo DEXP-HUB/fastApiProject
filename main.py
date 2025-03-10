@@ -1,38 +1,20 @@
-from typing import Literal
+from dependencies import auntification
 from DataBase.postgre_sql import ConnectionDb, SelectUser, InsertUser, DeleteUser, UpdateUser
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, Header, Cookie, Query, Request
 from fastapi.encoders import jsonable_encoder
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from psycopg2.extras import RealDictCursor
-from pydantic import BaseModel, Field, EmailStr
-from authx import AuthX, AuthXConfig
+from authx import AuthX, AuthXConfig, RequestToken
+from Schemes.by_users import UserLoginSchema, UserRegSchema
 
-
-class UserSchema(BaseModel):
-    login: str = Field(default=None, max_length=20)
-    password: str = Field(default=None, max_length=20)
-    first_name: str = Field(default=None, max_length=15)
-    last_name: str = Field(default=None, max_length=15)
-    city: str = Field(default=None, max_length=20)
-    address: str = Field(default=None, max_length=50)
-    age: int = Field(default=None, ge=0, le=115)
-    floor: int = Field(default=None, ge=0, le=163)
-    apartament_number: int = Field(default=None, ge=0)
-    id: int = Field(default=None, ge=0)
-    data_registratsii: Literal['NOW()'] = Field(default=None)
-    status: Literal['user', 'admin'] = Field(default=None)
-    email: EmailStr = Field(default=None)
-
-
-app = FastAPI(description='CRUD application')
 
 config = AuthXConfig()
 config.JWT_SECRET_KEY = "SECRET_KEY"
 config.JWT_ACCESS_COOKIE_NAME = "my_access_token"
 config.JWT_TOKEN_LOCATION = ["cookies"]
 
+app = FastAPI(description='CRUD application')
 security = AuthX(config=config)
-
 
 
 @app.get(
@@ -49,13 +31,13 @@ def get_users():
 
 
 @app.get(
-    path='/user/{id}',
+    path='/user/',
     description='Get user by id',
     tags=['Get method']
     )
-def get_user(id):
+def get_user(id: int):
     db = ConnectionDb().connect(cursor_factory=RealDictCursor)
-    user = SelectUser.select(db, id)
+    user = SelectUser.by_id(db, id)
     json = jsonable_encoder(user)
     return JSONResponse(content=json)
 
@@ -65,7 +47,7 @@ def get_user(id):
     description='Create new profile to db',
     tags=['Post method']
     )
-def registration(user: UserSchema):
+def registration(user: UserRegSchema):
     db = ConnectionDb().connect()
     InsertUser().insert_all(db, dict(user))
     return JSONResponse(status_code=200, content={'info': 'Create new profile to db', 'status': 200})
@@ -74,19 +56,14 @@ def registration(user: UserSchema):
 @app.post(
     path='/login',
     description='Authentication user',
-    tags=['Post method']
+    tags=['Post method'],
+    dependencies=[Depends(auntification)]
     )
-def login(user: UserSchema):
-    db = ConnectionDb().connect(cursor_factory=RealDictCursor)
-    user_data = SelectUser.by_login(db, user.login)
-    
-    if user_data['password'] == user.password:
-        token = security.create_access_token(uid='12345')
-        response = JSONResponse({'token': token, 'status': 200, 'result': 'Password True'}, 200)
-        response.set_cookie(config.JWT_ACCESS_COOKIE_NAME, token)
-        return response
-        
-    raise HTTPException(401, 'Password false')
+def login():
+    token = security.create_access_token(uid='12345')
+    response = JSONResponse({'token': token, 'status': 200, 'result': 'Password True'}, 200)
+    response.set_cookie(config.JWT_ACCESS_COOKIE_NAME, token)
+    return response
 
     
 @app.delete(
@@ -106,7 +83,7 @@ def delete_user(id):
     description='Update user to database',
     tags=['Update method']
     )
-def update_user(user: UserSchema):
+def update_user(user: UserRegSchema):
     db = ConnectionDb().connect()
     UpdateUser.by_id(db, dict(user))
     return JSONResponse(content=jsonable_encoder(user))

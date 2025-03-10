@@ -1,4 +1,5 @@
 import psycopg2
+from contextlib import contextmanager
 
 
 class ConnectionDb:
@@ -17,43 +18,50 @@ class ConnectionDb:
 
 class SelectUser:
     @classmethod
+    @contextmanager
+    def context_manager(cls, connect, sql, by_data=None):
+        cls.conn = connect
+        cls.sql = sql
+        cls.by_data = by_data
+
+        try:
+            cur = cls.conn.cursor()
+            cur.execute(cls.sql, (cls.by_data,))  
+            yield cur
+
+        finally:
+            cur.close()
+            cls.conn.close()
+
+    @classmethod
     def all_users(cls, connect):
         cls.conn = connect
+        cls.sql = "SELECT * FROM users.profiles;"
 
-        with cls.conn as conn:
-            with conn.cursor() as cur:
-                cur.execute("SELECT * FROM users.profiles;")
-                result = cur.fetchall()
-
-        return result
+        with cls.context_manager(cls.conn, cls.sql) as manager:
+            return manager.fetchall() 
     
 
     @classmethod
     def by_id(cls, connect, id):
         cls.conn = connect
         cls.id = id
+        cls.sql = "SELECT * FROM users.profiles WHERE id = %s;"
 
-        with cls.conn as conn:
-            with conn.cursor() as cur:
-                cur.execute(f"SELECT * FROM users.profiles WHERE id = {cls.id};")
-                result = cur.fetchone()
-
-        return result
+        with cls.context_manager(cls.conn, cls.sql, cls.id) as manager:
+            return manager.fetchone() 
+        
     
 
     @classmethod
     def by_login(cls, connect, login):
         cls.conn = connect
         cls.login = login
+        cls.sql = "SELECT login, password FROM users.profiles WHERE login = %s;"
 
-        with cls.conn as conn:
-            with conn.cursor() as cur:
-                cur.execute("SELECT login, password FROM users.profiles WHERE login = %s;", 
-                            (cls.login,))
-                result = cur.fetchone()
-
-        return result
-
+        with cls.context_manager(cls.conn, cls.sql, cls.login) as manager:
+            return manager.fetchone()
+        
     
 
 class InsertUser:
